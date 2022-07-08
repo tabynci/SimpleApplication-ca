@@ -9,10 +9,17 @@ workflows:
           branches:
             only:
               - main
+    - deploy:
+        filters:
+          branches:
+            only:
+              - main
+        requires:
+          - build
     
 jobs:
   build:
-    working_directory: ~/ExampleApplication
+    working_directory: ~/SimpleApplication
     docker:
       - image: circleci/node:10.16.3
     steps:
@@ -28,4 +35,11 @@ jobs:
       - save_cache:
           key: dependency-cache-{{ checksum "package-lock.json"}}
           paths:
-          - ./node_modules
+          - ./node_modulesdeploy:
+   deploy:
+    docker:
+      - image: circleci/node:10.16.3
+    steps:
+      - run:
+          name: deploy-application
+          command: ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS "rm -rf SimpleApplication-ca/; git clone https://github.com/tabynci/SimpleApplication-ca.git; source SimpleApplication-ca/deploy.sh"
